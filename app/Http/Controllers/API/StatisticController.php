@@ -9,6 +9,11 @@ use DateTime;
 
 class StatisticController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware(['auth:api']);
+    }
+
     public function interval(Request $request)
     {
         $dateFrom = is_null($request->datefrom) ? date("d.m.Y", strtotime("-30 day")) : date("d.m.Y",

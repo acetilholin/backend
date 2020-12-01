@@ -9,6 +9,11 @@ use DateTime;
 
 class TotalController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware(['auth:api']);
+    }
+
     public function totalPerMonth()
     {
         setlocale(LC_TIME, 'sl_SI.UTF-8');
