@@ -67,7 +67,7 @@ class InvoiceHelper
     {
         unset($invoiceData['id']);
         $invoiceData['sifra_predracuna'] = $this->sifraPredracuna();
-        $invoiceData['iid'] = Str::random(6);
+        $invoiceData['iid'] = Str::uuid();
         $invoice = Invoice::create($invoiceData);
         $invoice = $invoice->getAttributes();
         $id = $invoice['id'];

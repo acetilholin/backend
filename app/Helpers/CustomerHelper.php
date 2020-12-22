@@ -10,7 +10,7 @@ class CustomerHelper
     public function customerValidator($request)
     {
         $rules = array(
-            'naziv_partnerja' => 'required|unique:customers|max:120',
+            'naziv_partnerja' => 'required|max:120',
             'posta' => 'required',
             'kraj_ulica' => 'required|unique:customers'
         );
@@ -32,7 +32,6 @@ class CustomerHelper
     {
         return [
             'naziv_partnerja.required' => trans('customer.nazivRequired'),
-            'naziv_partnerja.unique' => trans('customer.nazivAlreadyExists'),
             'naziv_partnerja.max' => trans('customer.nazivPartnerjaMax'),
             'posta.required' => trans('customer.postRequired'),
             'kraj_ulica.required' => trans('customer.streetRequired'),
