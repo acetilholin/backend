@@ -1,0 +1,44 @@
+.column {
+    float: left;
+}
+.left {
+    width: 45%;
+}
+.middle {
+    width: 20%;
+}
+.right {
+    width: 35%;
+}
+.text-right {
+    text-align: right;
+}
+.c-mt {
+    margin-top: 10px;
+}
+.column img {
+    vertical-align: middle;
+}
+.margin-line {
+    margin-bottom: 2rem;
+}
+.font-size-body {
+    font-size: 19px;
+}
+.table-font {
+    font-size: 14px;
+}
+.klavzula-text {
+    font-size: 14px;
+}
+.recipient {
+    font-size: 23px !important;
+    margin-left: 3rem;
+}
+.clen {
+    width: 80%;
+}
+.table-report {
+    width: 150%;
+    font-size: 12.5px;
+}
