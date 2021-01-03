@@ -14,7 +14,7 @@ class TotalController extends Controller
         $this->middleware(['auth:api']);
     }
 
-    public function totalPerMonth()
+    public function totalPerMonth($year)
     {
         setlocale(LC_TIME, 'sl_SI.UTF-8');
         $month = date('m');
@@ -25,15 +25,14 @@ class TotalController extends Controller
             $months[] = ucfirst(strftime('%B', mktime(0, 0, 0, $i)));
         }
 
-        $year = date('Y');
-
         $total = 0;
         $grandTotal = 0;
 
         for ($i = 1; $i <= 12; $i++) {
             $month = $i < 10 ? '0'.$i : $i;
-            $fromDate = date("Y-m-d", strtotime('01-'.$month.'-'.$year));
+
             $days = cal_days_in_month(CAL_GREGORIAN, $month, $year);
+            $fromDate = date("Y-m-d", strtotime('01-'.$month.'-'.$year));
             $toDate = date("Y-m-d", strtotime($days.'-'.$month.'-'.$year));
 
             $finalInvoices = FinalInvoice::whereBetween('timestamp', [$fromDate, $toDate])->get();
@@ -51,7 +50,7 @@ class TotalController extends Controller
             }
         }
 
-        $toDate = date('d-m-Y');
+        $toDate = $year < date('Y') ? '31-12-'.$year : date('d-m-Y');
 
         return response()->json([
             'months' => $months,
