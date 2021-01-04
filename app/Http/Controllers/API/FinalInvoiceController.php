@@ -64,6 +64,7 @@ class FinalInvoiceController extends Controller
     {
         $helper = new FinalInvoiceHelper();
         $finalInvoices = $helper->finalPerYear($year);
+        $allInvoices = [];
 
         foreach ($finalInvoices as $invoice) {
             $allInvoices[] = $invoice;
