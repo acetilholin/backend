@@ -15,10 +15,12 @@ Route::group(['middleware' => ['api'], 'prefix' => 'auth'], function ($router) {
     Route::post('invoice/interval', 'API\InvoiceController@interval');
     Route::get('invoice/{id}/copy', 'API\InvoiceController@copy');
     Route::get('invoice/{id}/export', 'API\InvoiceController@export');
+    Route::get('invoice/{year}', 'API\InvoiceController@perYear');
 
     Route::resource('finalInvoices', 'API\FinalInvoiceController');
     Route::post('finalInvoice/interval', 'API\FinalInvoiceController@interval');
     Route::post('finalInvoice/report', 'API\FinalInvoiceController@report');
+    Route::get('finalInvoice/{year}', 'API\FinalInvoiceController@perYear');
 
     Route::resource('users', 'API\UserController');
     Route::get('users/{id}/edit/{attr}/{data}', 'API\UserController@edit');

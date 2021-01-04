@@ -16,9 +16,14 @@ class FinalInvoiceHelper
         $max = 0;
         foreach ($finalInvoices as $final) {
             $sifraPredracuna = $final->sifra_predracuna;
-            preg_match('/^\d{1,3}/', $sifraPredracuna, $match);
-            $num = $match[0];
-            $max = $num > $max ? $num : $max;
+
+            preg_match('/\d{1,4}$/', $sifraPredracuna, $matchYear);
+
+            if ($matchYear[0] === date('Y')) {
+                preg_match('/^\d{1,3}/', $sifraPredracuna, $matchSifra);
+                $num = $matchSifra[0];
+                $max = $num > $max ? $num : $max;
+            }
         }
         return ($max + 1).'/'.date("Y");
     }
@@ -27,6 +32,12 @@ class FinalInvoiceHelper
     {
         return DB::select('SELECT * FROM final_invoices ORDER BY sifra_predracuna + 0 ASC');
     }
+
+    public function finalPerYear($year)
+    {
+        return DB::select("SELECT * FROM final_invoices WHERE RIGHT(sifra_predracuna,4) = '".$year."' ORDER BY sifra_predracuna + 0 ASC");
+    }
+
 
     public function getIntervalAndSort($from, $to)
     {

@@ -55,6 +55,26 @@ class FinalInvoiceController extends Controller
     }
 
     /**
+     * Display final invoices for specific year.
+     *
+     * @param  \App\FinalInvoice  $finalInvoice
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function perYear($year)
+    {
+        $helper = new FinalInvoiceHelper();
+        $finalInvoices = $helper->finalPerYear($year);
+
+        foreach ($finalInvoices as $invoice) {
+            $allInvoices[] = $invoice;
+        }
+
+        return response()->json([
+            'finalInvoices' => $allInvoices,
+        ]);
+    }
+
+    /**
      * Display the specified resource.
      *
      * @param  \App\FinalInvoice  $finalInvoice

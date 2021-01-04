@@ -7,6 +7,7 @@ use App\FinalInvoice;
 use App\Invoice;
 use App\Item;
 use App\Recipient;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class InvoiceHelper
@@ -30,6 +31,11 @@ class InvoiceHelper
         }
     }
 
+    public function invoicePerYear($year)
+    {
+        return DB::select("SELECT * FROM invoices WHERE RIGHT(sifra_predracuna,4) = '".$year."'");
+    }
+
     public function sifraPredracuna()
     {
         $invoices = Invoice::all();
@@ -37,9 +43,14 @@ class InvoiceHelper
         $max = 0;
         foreach ($invoices as $invoice) {
             $sifraPredracuna = $invoice->sifra_predracuna;
-            preg_match('/^\d{1,3}/', $sifraPredracuna, $match);
-            $num = $match[0];
-            $max = $num > $max ? $num : $max;
+
+            preg_match('/\d{1,4}$/', $sifraPredracuna, $matchYear);
+
+            if ($matchYear[0] === date('Y')) {
+                preg_match('/^\d{1,3}/', $sifraPredracuna, $matchSifra);
+                $num = $matchSifra[0];
+                $max = $num > $max ? $num : $max;
+            }
         }
         return ($max + 1).'/'.date("Y");
     }

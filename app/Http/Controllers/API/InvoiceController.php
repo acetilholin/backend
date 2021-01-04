@@ -147,6 +147,27 @@ class InvoiceController extends Controller
     }
 
     /**
+     * Display invoice for specific year.
+     *
+     * @param  InvoicesResource  $invoiceitems
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function perYear($year)
+    {
+        $helper = new InvoiceHelper();
+        $invoices = $helper->invoicePerYear($year);
+        $allInvoices = [];
+
+        foreach ($invoices as $invoice) {
+            $allInvoices[] = $invoice;
+        }
+
+        return response()->json([
+            'invoices' => $allInvoices,
+        ]);
+    }
+
+    /**
      * Display the specified resource for interval.
      *
      * @param  InvoicesResource  $invoiceitems
@@ -159,7 +180,7 @@ class InvoiceController extends Controller
 
         $invoices = DB::table('invoices')
             ->whereBetween('timestamp', [$from, $to])
-            ->orderBy('timestamp', 'asc')
+            ->orderBy('id', 'ASC')
             ->get();
 
         foreach ($invoices as $invoice) {
