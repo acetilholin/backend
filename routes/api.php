@@ -53,7 +53,7 @@ Route::group(['middleware' => ['api'], 'prefix' => 'auth'], function ($router) {
     Route::resource('employees', 'API\EmployeeController');
 
     Route::post('interval', 'API\StatisticController@interval');
-    Route::get('total/{year}', 'API\TotalController@totalPerMonth');
+    Route::post('total', 'API\TotalController@totalPerMonth');
 });
 
 

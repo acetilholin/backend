@@ -14,49 +14,58 @@ class TotalController extends Controller
         $this->middleware(['auth:api']);
     }
 
-    public function totalPerMonth($year)
+    public function totalPerMonth(Request $request)
     {
+        $years = $request->years;
+        $response = [];
         setlocale(LC_TIME, 'sl_SI.UTF-8');
-        $month = date('m');
-
-        $currentMonth = substr($month, 0, 1) == '0' ? substr($month, 1, 1) : $month;
 
         for ($i = 1; $i <= 12; $i++) {
             $months[] = ucfirst(strftime('%B', mktime(0, 0, 0, $i)));
         }
 
-        $total = 0;
-        $grandTotal = 0;
+        foreach ($years as $year) {
+            $priceByMonth = [];
+            $total = 0;
+            $grandTotal = 0;
 
-        for ($i = 1; $i <= 12; $i++) {
-            $month = $i < 10 ? '0'.$i : $i;
+            for ($i = 1; $i <= 12; $i++) {
+                $month = $i < 10 ? '0'.$i : $i;
 
-            $days = cal_days_in_month(CAL_GREGORIAN, $month, $year);
-            $fromDate = date("Y-m-d", strtotime('01-'.$month.'-'.$year));
-            $toDate = date("Y-m-d", strtotime($days.'-'.$month.'-'.$year));
+                $days = cal_days_in_month(CAL_GREGORIAN, $month, $year);
+                $fromDate = date("Y-m-d", strtotime('01-'.$month.'-'.$year));
+                $toDate = date("Y-m-d", strtotime($days.'-'.$month.'-'.$year));
 
-            $finalInvoices = FinalInvoice::whereBetween('timestamp', [$fromDate, $toDate])->get();
+                $finalInvoices = FinalInvoice::whereBetween('timestamp', [$fromDate, $toDate])->get();
 
-            if (empty($finalInvoices)) {
-                $priceByMonth[] = 0;
-            } else {
-                foreach ($finalInvoices as $final) {
-                    $final = $final->getAttributes();
-                    $total += $final['total'];
-                    $grandTotal += $final['total'];
+                if (empty($finalInvoices)) {
+                    $priceByMonth[] = 0;
+                } else {
+                    foreach ($finalInvoices as $final) {
+                        $final = $final->getAttributes();
+                        $total += $final['total'];
+                        $grandTotal += $final['total'];
+                    }
+                    $priceByMonth[] = $total;
+                    $total = 0;
                 }
-                $priceByMonth[] = $total;
-                $total = 0;
             }
+
+            $toDate = $year < date('Y') ? '31-12-'.$year : date('d-m-Y');
+
+            $yearData = [
+                'year' => $year,
+                'months' => $months,
+                'priceByMonth' => $priceByMonth,
+                'interval' => '01-01-'.$year.' ~ '.$toDate,
+                'grandTotal' => $grandTotal
+            ];
+
+            $response[] = $yearData;
         }
 
-        $toDate = $year < date('Y') ? '31-12-'.$year : date('d-m-Y');
-
         return response()->json([
-            'months' => $months,
-            'priceByMonth' => $priceByMonth,
-            'interval' => '01-01-'.$year.' ~ '.$toDate,
-            'grandTotal' => $grandTotal
+            'response' => $response
         ], 200);
     }
 }
