@@ -51,9 +51,11 @@ Route::group(['middleware' => ['api'], 'prefix' => 'auth'], function ($router) {
     Route::post('months/interval', 'API\MonthController@interval');
 
     Route::resource('employees', 'API\EmployeeController');
-
     Route::post('interval', 'API\StatisticController@interval');
     Route::post('total', 'API\TotalController@totalPerMonth');
+
+    Route::resource('sklads','API\SkladController');
+    Route::get('sklads/{id}/{status}/status', 'API\SkladController@status');
 });
 
 
