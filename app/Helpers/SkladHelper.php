@@ -4,13 +4,14 @@
 namespace App\Helpers;
 
 use App\Customer;
-use App\FinalInvoice;
+use App\Invoice;
+use Illuminate\Support\Facades\Log;
 
 class SkladHelper
 {
     public function invoice($id)
     {
-        $collection = FinalInvoice::where('id', $id)->first();
+        $collection = Invoice::where('id', $id)->first();
         return $collection->getAttributes();
     }
 

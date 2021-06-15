@@ -46,7 +46,7 @@ class SkladController extends Controller
      */
     public function store(Request $request)
     {
-        $data = request(['invoice_id', 'customer_id', 'description', 'date']);
+        $data = request(['invoice_id', 'customer_id', 'created', 'item', 'work_date']);
         Sklad::create($data);
         return response()->json([
             'success' => trans('sklad.created'),
@@ -65,10 +65,11 @@ class SkladController extends Controller
         return response()->json([
             'id' => $sklad->id,
             'status' => $sklad->status,
-            'description' => $sklad->description,
-            'date' => $sklad->date,
+            'item' => $sklad->item,
+            'created' => $sklad->created,
+            'work_date' => $sklad->work_date,
             'customer' => $helper->customer($sklad->customer_id),
-            'final_invoice' => $helper->invoice($sklad->invoice_id)
+            'invoice' => $helper->invoice($sklad->invoice_id)
         ], 200);
     }
 
@@ -80,6 +81,7 @@ class SkladController extends Controller
      */
     public function status($id, $status)
     {
+        $status = $status > 2 ? 0 : $status;
         $sklad = Sklad::find($id);
         $sklad->status = $status;
         $sklad->save();
@@ -97,15 +99,16 @@ class SkladController extends Controller
      */
     public function update(Request $request, Sklad $sklad)
     {
-        $skladToUpdate = request(['id', 'customer_id', 'invoice_id', 'description', 'status', 'date']);
+        $skladToUpdate = request(['id', 'customer_id', 'invoice_id', 'item', 'status', 'created', 'work_date']);
 
         Sklad::where('id', $skladToUpdate['id'])
             ->update([
                 'customer_id' => $skladToUpdate['customer_id'],
                 'invoice_id' => $skladToUpdate['invoice_id'],
-                'description' => $skladToUpdate['description'],
+                'item' => $skladToUpdate['item'],
                 'status' => $skladToUpdate['status'],
-                'date' => $skladToUpdate['date']
+                'work_date' => $skladToUpdate['work_date'],
+                'created' => $skladToUpdate['created']
             ]);
         return response()->json([
             'success' => trans('sklad.updated'),
