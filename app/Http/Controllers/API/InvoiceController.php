@@ -125,7 +125,7 @@ class InvoiceController extends Controller
         $customer = $customerData->getAttributes();
 
         $klavzulaData = Klavzula::where('short_name', $klavzula)->first();
-        $klavzula = $klavzulaData->getAttributes();
+        $klavzula = isset($klavzulaData) ? $klavzulaData->getAttributes(): null;
 
         $recipientData = Recipient::where('invoice_id', $id)->first();
 

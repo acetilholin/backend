@@ -102,7 +102,7 @@ class FinalInvoiceController extends Controller
         }
 
         $klavzulaData = Klavzula::where('short_name', $klavzulaShort)->first();
-        $klavzula = $klavzulaData->getAttributes();
+        $klavzula = isset($klavzulaData) ? $klavzulaData->getAttributes(): null;
 
         $finalInvoice = $finalInvoice->all();
 
