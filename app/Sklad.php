@@ -14,8 +14,8 @@ class Sklad extends Model
         return $this->hasOne(Customer::class);
     }
 
-    public function invoice()
+    public function finalInvoice()
     {
-        return $this->hasOne(Invoice::class);
+        return $this->hasOne(FinalInvoice::class);
     }
 }

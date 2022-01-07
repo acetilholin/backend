@@ -17,8 +17,8 @@ class CreateSkladsTable extends Migration
             $table->id();
             $table->unsignedBigInteger('customer_id');
             $table->foreign('customer_id')->references('id')->on('customers');
-            $table->unsignedBigInteger('invoice_id');
-            $table->foreign('invoice_id')->references('id')->on('invoices');
+            $table->unsignedBigInteger('final_invoice_id');
+            $table->foreign('final_invoice_id')->references('id')->on('final_invoices');
             $table->string('item')->nullable();
             $table->integer('status')->default(0);
             $table->date('created')->nullable();

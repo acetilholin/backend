@@ -46,7 +46,7 @@ class SkladController extends Controller
      */
     public function store(Request $request)
     {
-        $data = request(['invoice_id', 'customer_id', 'created', 'item', 'work_date']);
+        $data = request(['final_invoice_id', 'customer_id', 'created', 'item', 'work_date']);
         Sklad::create($data);
         return response()->json([
             'success' => trans('sklad.created'),
@@ -69,7 +69,7 @@ class SkladController extends Controller
             'created' => $sklad->created,
             'work_date' => $sklad->work_date,
             'customer' => $helper->customer($sklad->customer_id),
-            'invoice' => $helper->invoice($sklad->invoice_id)
+            'invoice' => $helper->finalInvoice($sklad->final_invoice_id)
         ], 200);
     }
 
@@ -99,12 +99,12 @@ class SkladController extends Controller
      */
     public function update(Request $request, Sklad $sklad)
     {
-        $skladToUpdate = request(['id', 'customer_id', 'invoice_id', 'item', 'status', 'created', 'work_date']);
+        $skladToUpdate = request(['id', 'customer_id', 'final_invoice_id', 'item', 'status', 'created', 'work_date']);
 
         Sklad::where('id', $skladToUpdate['id'])
             ->update([
                 'customer_id' => $skladToUpdate['customer_id'],
-                'invoice_id' => $skladToUpdate['invoice_id'],
+                'final_invoice_id' => $skladToUpdate['final_invoice_id'],
                 'item' => $skladToUpdate['item'],
                 'status' => $skladToUpdate['status'],
                 'work_date' => $skladToUpdate['work_date'],

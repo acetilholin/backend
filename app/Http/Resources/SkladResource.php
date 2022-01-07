@@ -23,7 +23,7 @@ class SkladResource extends JsonResource
             'work_date' => $this->work_date,
             'item' => $this->item,
             'status' => $this->status,
-            'invoice_id' => $helper->invoice($this->invoice_id)
+            'invoice_id' => $helper->finalInvoice($this->final_invoice_id)
         ];
     }
 }
