@@ -127,6 +127,20 @@ class FinalInvoiceController extends Controller
     }
 
     /**
+     * Get final invoice for specific customer.
+     *
+     * @param $id
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function fromCustomer($id)
+    {
+        $final = DB::table('final_invoices')->where('customer_id', $id)->get();
+        return response()->json([
+            'final' => $final
+        ]);
+    }
+
+    /**
      * Update the specified resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request

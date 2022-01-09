@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\SkladResource;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class SkladController extends Controller
@@ -64,29 +65,11 @@ class SkladController extends Controller
         $helper = new SkladHelper();
         return response()->json([
             'id' => $sklad->id,
-            'status' => $sklad->status,
             'item' => $sklad->item,
             'created' => $sklad->created,
             'work_date' => $sklad->work_date,
             'customer' => $helper->customer($sklad->customer_id),
             'invoice' => $helper->finalInvoice($sklad->final_invoice_id)
-        ], 200);
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  Request  $request
-     * @return JsonResponse
-     */
-    public function status($id, $status)
-    {
-        $status = $status > 2 ? 0 : $status;
-        $sklad = Sklad::find($id);
-        $sklad->status = $status;
-        $sklad->save();
-        return response()->json([
-            'success' => trans('sklad.statusUpdated'),
         ], 200);
     }
 
@@ -99,20 +82,50 @@ class SkladController extends Controller
      */
     public function update(Request $request, Sklad $sklad)
     {
-        $skladToUpdate = request(['id', 'customer_id', 'final_invoice_id', 'item', 'status', 'created', 'work_date']);
+        $skladToUpdate = request(['id', 'customer_id', 'final_invoice_id', 'item', 'created', 'work_date']);
 
         Sklad::where('id', $skladToUpdate['id'])
             ->update([
                 'customer_id' => $skladToUpdate['customer_id'],
                 'final_invoice_id' => $skladToUpdate['final_invoice_id'],
                 'item' => $skladToUpdate['item'],
-                'status' => $skladToUpdate['status'],
                 'work_date' => $skladToUpdate['work_date'],
                 'created' => $skladToUpdate['created']
             ]);
         return response()->json([
             'success' => trans('sklad.updated'),
         ], 200);
+    }
+
+
+    /**
+     * Fitler sklads for printing
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return JsonResponse
+     */
+    public function filter(Request $request)
+    {
+        $from = $request->from;
+        $to = $request->to;
+        $all = [];
+
+        $sklads = DB::table('sklads')
+            ->whereBetween('created', [$from, $to])
+            ->orderBy('id', 'ASC')
+            ->get();
+
+        $helper = new SkladHelper();
+        foreach ($sklads as $sklad) {
+            $final =  $helper->finalInvoice($sklad->final_invoice_id);
+            $sklad->sifra_predracuna = $final['sifra_predracuna'];
+            $sklad->ime_priimek = $final['ime_priimek'];
+            $all[] = $sklad;
+        }
+
+        return response()->json([
+            'sklads' => $all,
+        ]);
     }
 
     /**

@@ -21,6 +21,7 @@ Route::group(['middleware' => ['api'], 'prefix' => 'auth'], function ($router) {
     Route::post('finalInvoice/interval', 'API\FinalInvoiceController@interval');
     Route::post('finalInvoice/report', 'API\FinalInvoiceController@report');
     Route::get('finalInvoice/{year}', 'API\FinalInvoiceController@perYear');
+    Route::get('finalInvoice/customer/{id}', 'API\FinalInvoiceController@fromCustomer');
 
     Route::resource('users', 'API\UserController');
     Route::get('users/{id}/edit/{attr}/{data}', 'API\UserController@edit');
@@ -56,6 +57,7 @@ Route::group(['middleware' => ['api'], 'prefix' => 'auth'], function ($router) {
 
     Route::resource('sklads','API\SkladController');
     Route::get('sklads/{id}/{status}/status', 'API\SkladController@status');
+    Route::post('sklads/filter', 'API\SkladController@filter');
 });
 
 
