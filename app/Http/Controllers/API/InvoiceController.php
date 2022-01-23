@@ -125,7 +125,7 @@ class InvoiceController extends Controller
         $customer = $customerData->getAttributes();
 
         $klavzulaData = Klavzula::where('short_name', $klavzula)->first();
-        $klavzula = isset($klavzulaData) ? $klavzulaData->getAttributes(): null;
+        $klavzula = isset($klavzulaData) ? $klavzulaData->getAttributes() : null;
 
         $recipientData = Recipient::where('invoice_id', $id)->first();
 
@@ -233,12 +233,12 @@ class InvoiceController extends Controller
 
         $finalInvoice = FinalInvoice::where('id', $id)->first();
 
+        $invoice->update($invoiceData['invoice']);
+
         if ($finalInvoice) {
             unset($invoiceData['invoice']['sifra_predracuna']);
             $finalInvoice->update($invoiceData['invoice']);
         }
-
-        $invoice->update($invoiceData['invoice']);
 
         $items = $itemsData['items'];
         $helper = new InvoiceHelper();
@@ -268,6 +268,21 @@ class InvoiceController extends Controller
         $invoice->delete();
         return response()->json([
             'success' => trans('invoice.invoiceRemoved'),
+        ], 200);
+    }
+
+
+    /**
+     * Check if sifra already exists.
+     *
+     * @param  \App\Invoice  $sifra
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function checkIfSifraExists(Request $request)
+    {
+        $invoice = Invoice::where('sifra_predracuna', $request->sifra)->first();
+        return response()->json([
+            'data' => $invoice !== null,
         ], 200);
     }
 }

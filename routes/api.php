@@ -16,6 +16,8 @@ Route::group(['middleware' => ['api'], 'prefix' => 'auth'], function ($router) {
     Route::get('invoice/{id}/copy', 'API\InvoiceController@copy');
     Route::get('invoice/{id}/export', 'API\InvoiceController@export');
     Route::get('invoice/{year}', 'API\InvoiceController@perYear');
+    Route::post('invoice/checkSifra', 'API\InvoiceController@checkIfSifraExists');
+
 
     Route::resource('finalInvoices', 'API\FinalInvoiceController');
     Route::post('finalInvoice/interval', 'API\FinalInvoiceController@interval');

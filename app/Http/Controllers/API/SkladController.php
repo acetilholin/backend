@@ -117,9 +117,8 @@ class SkladController extends Controller
 
         $helper = new SkladHelper();
         foreach ($sklads as $sklad) {
-            $final =  $helper->finalInvoice($sklad->final_invoice_id);
-            $sklad->sifra_predracuna = $final['sifra_predracuna'];
-            $sklad->ime_priimek = $final['ime_priimek'];
+            $sklad->invoice_id = $helper->finalInvoice($sklad->final_invoice_id);
+            $sklad->customer = $helper->customer($sklad->customer_id);
             $all[] = $sklad;
         }
 
