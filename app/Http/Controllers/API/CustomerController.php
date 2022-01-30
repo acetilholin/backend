@@ -24,7 +24,7 @@ class CustomerController extends Controller
      */
     public function index()
     {
-        return CustomersResource::collection(Customer::all());
+        return CustomersResource::collection(Customer::all()->sortByDesc('id'));
     }
 
     /**

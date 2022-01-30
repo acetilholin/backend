@@ -33,7 +33,7 @@ class InvoiceHelper
 
     public function invoicePerYear($year)
     {
-        return DB::select("SELECT * FROM invoices WHERE RIGHT(sifra_predracuna,4) = '".$year."'");
+        return DB::select("SELECT * FROM invoices WHERE RIGHT(sifra_predracuna,4) = '".$year."' ORDER BY id DESC");
     }
 
     public function sifraPredracuna()

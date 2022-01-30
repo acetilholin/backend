@@ -25,7 +25,7 @@ class InvoiceController extends Controller
 
     public function index()
     {
-        return InvoicesResource::collection(Invoice::all());
+        return InvoicesResource::collection(Invoice::all()->sortByDesc('id'));
     }
 
     /**

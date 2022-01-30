@@ -30,12 +30,12 @@ class FinalInvoiceHelper
 
     public function getAllAndSort()
     {
-        return DB::select('SELECT * FROM final_invoices ORDER BY sifra_predracuna + 0 ASC');
+        return DB::select('SELECT * FROM final_invoices ORDER BY sifra_predracuna + 0 DESC');
     }
 
     public function finalPerYear($year)
     {
-        return DB::select("SELECT * FROM final_invoices WHERE RIGHT(sifra_predracuna,4) = '".$year."' ORDER BY sifra_predracuna + 0 ASC");
+        return DB::select("SELECT * FROM final_invoices WHERE RIGHT(sifra_predracuna,4) = '".$year."' ORDER BY sifra_predracuna + 0 DESC");
     }
 
 

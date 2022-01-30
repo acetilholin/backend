@@ -26,7 +26,7 @@ class SkladController extends Controller
      */
     public function index()
     {
-        return SkladResource::collection(Sklad::all());
+        return SkladResource::collection(Sklad::all()->sortByDesc('id'));
     }
 
     /**
