@@ -36,6 +36,8 @@ class AuthController extends Controller
         $credentials = request(['email', 'password']);
         $validator = Validator::make($credentials, $rules, $this->messages());
 
+        $ttl = request(['rememberMe']) ? env('JWT_REMEMBER_TTL') : env('JWT_TTL');
+
         if ($validator->fails()) {
             $formatter = new MsgFormatterHelper();
             $messages = $formatter->format($validator->errors()->all());
@@ -58,7 +60,7 @@ class AuthController extends Controller
         $userHelper = new UserHelper();
         $userHelper->lastSeen($user);
 
-        if (!$token = auth()->attempt($credentials)) {
+        if (!$token = auth()->setTTL($ttl)->attempt($credentials)) {
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 

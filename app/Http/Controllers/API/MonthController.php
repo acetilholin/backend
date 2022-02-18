@@ -24,7 +24,7 @@ class MonthController extends Controller
      */
     public function index()
     {
-        return MonthResource::collection(Month::all());
+        return MonthResource::collection(Month::all()->sortByDesc('id'));
     }
 
     /**
