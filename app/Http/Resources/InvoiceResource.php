@@ -14,17 +14,18 @@ class InvoiceResource extends JsonResource
      */
     public function toArray($request)
     {
+        $invoice = $this->resource;
         return [
-            'id' => $this->id,
-            'sifra_predracuna' => $this->sifra_predracuna,
-            'ime_priimek' => $this->ime_priimek,
-            'total' => $this->total,
-            'vat' => $this->vat,
-            'timestamp' => $this->timestamp,
-            'expiration' => $this->expiration,
-            'quantity' => $this->quantity,
-            'work_date' => $this->work_date,
-            'klavzula' => $this->klavzula
+            'id' => $invoice['id'],
+            'sifra_predracuna' => $invoice['sifra_predracuna'],
+            'ime_priimek' => $invoice['ime_priimek'],
+            'total' => $invoice['total'],
+            'vat' => $invoice['vat'],
+            'timestamp' => $invoice['timestamp'],
+            'expiration' => $invoice['expiration'],
+            'quantity' => $invoice['quantity'],
+            'work_date' => $invoice['work_date'],
+            'klavzula' => $invoice['klavzula']
         ];
     }
 }

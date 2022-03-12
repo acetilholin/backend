@@ -49,6 +49,7 @@ class UserHelper
         $id = $user->id;
         $country = $this->getUserIpAndCountry()['country'];
         $country = $country !== null ? $country : 'si';
+
         User::where('id', $id)
             ->update([
                 'last_seen' => date("Y-m-d H:i"),

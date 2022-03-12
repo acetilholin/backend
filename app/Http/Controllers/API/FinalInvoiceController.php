@@ -3,11 +3,17 @@
 namespace App\Http\Controllers\API;
 
 use App\Customer;
+use App\CustomerRealm;
 use App\FinalInvoice;
+use App\FinalInvoiceRealm;
 use App\Helpers\FinalInvoiceHelper;
+use App\Invoice;
 use App\Item;
+use App\ItemRealm;
 use App\Klavzula;
+use App\KlavzulaRealm;
 use App\Recipient;
+use App\RecipientRealm;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\DB;
@@ -24,10 +30,13 @@ class FinalInvoiceController extends Controller
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function index()
+    public function index(Request $request)
     {
+        $table = $request->route()->parameters['realm'] === env('R1') ?
+            'final_invoices' : 'final_invoices_2';
+
         $helper = new FinalInvoiceHelper();
-        $finalAll = $helper->getAllAndSort();
+        $finalAll = $helper->getAllAndSort($table);
         return response()->json([
             'final' => $finalAll
         ]);
@@ -60,10 +69,12 @@ class FinalInvoiceController extends Controller
      * @param  \App\FinalInvoice  $finalInvoice
      * @return \Illuminate\Http\JsonResponse
      */
-    public function perYear($year)
+    public function perYear($realm, $year)
     {
         $helper = new FinalInvoiceHelper();
-        $finalInvoices = $helper->finalPerYear($year);
+        $table = $realm === env('R1') ?
+            'final_invoices' : 'final_invoices_2';
+        $finalInvoices = $helper->finalPerYear($table, $year);
         $allInvoices = [];
 
         foreach ($finalInvoices as $invoice) {
@@ -81,18 +92,27 @@ class FinalInvoiceController extends Controller
      * @param  \App\FinalInvoice  $finalInvoice
      * @return \Illuminate\Http\JsonResponse
      */
-    public function show(FinalInvoice $finalInvoice)
+    public function show($realm, $id)
     {
-        $finalInvoice = collect($finalInvoice);
-        $id = $finalInvoice->get('id');
-        $customerId = $finalInvoice->get('customer_id');
-        $klavzulaShort = $finalInvoice->get('klavzula');
+        if ($realm === env('R1')) {
+            $attr = FinalInvoice::where('id', $id)->first();
+        } else {
+            $attr = FinalInvoiceRealm::where('id', $id)->first();
+        }
 
-        $customerData = Customer::where('id', $customerId)->first();
+        $finalInvoice = $attr->getAttributes();
+
+        $customerData = $realm === env('R1') ?
+            Customer::where('id', $finalInvoice['customer_id'])->first() :
+            CustomerRealm::where('id', $finalInvoice['customer_id'])->first();
         $customer = $customerData->getAttributes();
-        $items = Item::where('invoice_id', $id)->get();
 
-        $recipientData = Recipient::where('invoice_id', $id)->first();
+        $items = $realm === env('R1') ? Item::where('invoice_id', $id)->get() :
+            ItemRealm::where('invoice_id', $id)->get();
+
+        $recipientData = $realm === env('R1') ? Recipient::where('invoice_id', $id)->first() :
+            RecipientRealm::where('invoice_id', $id)->first();
+
         $recipient = $recipientData !== null ? $recipientData->getAttributes() : null;
 
         $allItems = [];
@@ -101,10 +121,11 @@ class FinalInvoiceController extends Controller
             $allItems[] = $item->getAttributes();
         }
 
-        $klavzulaData = Klavzula::where('short_name', $klavzulaShort)->first();
-        $klavzula = isset($klavzulaData) ? $klavzulaData->getAttributes(): null;
+        $klavzulaData = $realm === env('R1') ?
+            Klavzula::where('short_name', $finalInvoice['klavzula'])->first() :
+            KlavzulaRealm::where('short_name', $finalInvoice['klavzula'])->first();
 
-        $finalInvoice = $finalInvoice->all();
+        $klavzula = isset($klavzulaData) ? $klavzulaData->getAttributes() : null;
 
         return response()->json([
             'items' => $allItems,
@@ -132,9 +153,11 @@ class FinalInvoiceController extends Controller
      * @param $id
      * @return \Illuminate\Http\JsonResponse
      */
-    public function fromCustomer($id)
+    public function fromCustomer($realm, $id)
     {
-        $final = DB::table('final_invoices')->where('customer_id', $id)->get();
+        $table = $realm === env('R1') ?
+            'final_invoices' : 'final_invoices_2';
+        $final = DB::table($table)->where('customer_id', $id)->get();
         return response()->json([
             'final' => $final
         ]);
@@ -162,11 +185,16 @@ class FinalInvoiceController extends Controller
     {
         $from = $request->from;
         $to = $request->to;
+        $realm = $request->realm;
+
+        $table = $request->realm === env('R1') ?
+            'final_invoices' : 'final_invoices_2';
+
         $allInvoices = [];
 
         $helper = new FinalInvoiceHelper();
 
-        $finalInvoices = $helper->getIntervalAndSort($from, $to);
+        $finalInvoices = $helper->getIntervalAndSort($table, $from, $to);
 
         foreach ($finalInvoices as $invoice) {
             $noVAT = 0;
@@ -178,13 +206,16 @@ class FinalInvoiceController extends Controller
             }
 
             $customerId = $invoice->customer_id;
-            $customerData = Customer::where('id', $customerId)->first();
+
+            $customerData = $realm === env('R1') ?
+                Customer::where('id', $customerId)->first() :
+                CustomerRealm::where('id', $customerId)->first();
             $customer = $customerData->getAttributes();
 
             $invoice->kraj_ulica = $customer['kraj_ulica'];
             $invoice->id_ddv = $customer['id_ddv'];
             $invoice->posta = $customer['posta'];
-            $tujina = $customer['tujina'] ? true : false;
+            $tujina = (bool) $customer['tujina'];
 
             $invoice->tujina = $tujina;
             $invoice->noVAT = $noVAT;
@@ -209,9 +240,12 @@ class FinalInvoiceController extends Controller
         $from = $request->from;
         $to = $request->to;
 
+        $table = $request->realm === env('R1') ?
+            'final_invoices' : 'final_invoices_2';
+
         $allInvoices = [];
 
-        $finalInvoices = DB::table('final_invoices')
+        $finalInvoices = DB::table($table)
             ->whereBetween('timestamp', [$from, $to])
             ->orderBy('timestamp', 'asc')
             ->get();
@@ -231,8 +265,11 @@ class FinalInvoiceController extends Controller
      * @param  \App\FinalInvoice  $finalInvoice
      * @return \Illuminate\Http\JsonResponse
      */
-    public function destroy(FinalInvoice $finalInvoice)
+    public function destroy($realm, $id)
     {
+        $finalInvoice = $realm === env('R1') ?
+            FinalInvoice::find($id) : FinalInvoiceRealm::find($id);
+
         $finalInvoice->delete();
         return response()->json([
             'success' => trans('final.finalInvoiceDeleted')

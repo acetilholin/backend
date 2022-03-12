@@ -8,5 +8,7 @@ return [
     'streetRequired' => 'Ulica je obvezna',
     'customerCreated' => 'Stranka je ustvarjena',
     'companyExists' => 'Stranka s tem naslovom že obstaja',
-    'customerEdited' => 'Stranka je posodobljena'
+    'customerEdited' => 'Stranka je posodobljena',
+    'alreadyExists' => 'Stranka v D.O.O bazi že obstaja',
+    'exportedToRealm' => 'Stranka je izvožena v D.O.O'
 ];

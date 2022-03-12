@@ -12,7 +12,7 @@ class EmployeeController extends Controller
     {
         $this->middleware(['auth:api']);
     }
-    
+
     /**
      * Display a listing of the resource.
      *
@@ -69,8 +69,9 @@ class EmployeeController extends Controller
      * @param  \App\Employee  $employee
      * @return \Illuminate\Http\JsonResponse
      */
-    public function edit(Employee $employee)
+    public function edit($realm, $id)
     {
+        $employee = Employee::find($id);
         return response()->json([
             'employee' => $employee
         ], 200);
@@ -83,9 +84,11 @@ class EmployeeController extends Controller
      * @param  \App\Employee  $employee
      * @return \Illuminate\Http\JsonResponse
      */
-    public function update(Request $request, Employee $employee)
+    public function update(Request $request)
     {
+        $id = $request->route()->parameters['employee'];
         $employeeData = request(['id', 'person', 'address', 'posta']);
+        $employee = Employee::find($id);
         $employee->update($employeeData);
 
         return response()->json([
@@ -99,8 +102,9 @@ class EmployeeController extends Controller
      * @param  \App\Employee  $employee
      * @return \Illuminate\Http\JsonResponse
      */
-    public function destroy(Employee $employee)
+    public function destroy($realm, $id)
     {
+        $employee = Employee::find($id);
         $employee->delete();
         return response()->json([
             'success' => trans('employee.employeeRemoved'),

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Helpers\SkladHelper;
 use App\Sklad;
+use App\SkladRealm;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
@@ -22,11 +23,16 @@ class SkladController extends Controller
     /**
      * Display a listing of the resource.
      *
-     * @return AnonymousResourceCollection
+     * @return array
      */
-    public function index()
+    public function index($realm)
     {
-        return SkladResource::collection(Sklad::all()->sortByDesc('id'));
+        $helper = new SkladHelper();
+        $sklad = $realm === env('R1') ?
+            Sklad::all()->sortByDesc('id') :
+            SkladRealm::all()->sortByDesc('id');
+
+        return $helper->getAll($sklad, $realm);
     }
 
     /**
@@ -48,7 +54,13 @@ class SkladController extends Controller
     public function store(Request $request)
     {
         $data = request(['final_invoice_id', 'customer_id', 'created', 'item', 'work_date']);
-        Sklad::create($data);
+
+        if ($request->realm === env('R1')) {
+            Sklad::create($data);
+        } else {
+            SkladRealm::create($data);
+        }
+
         return response()->json([
             'success' => trans('sklad.created'),
         ], 200);
@@ -60,16 +72,18 @@ class SkladController extends Controller
      * @param  \App\Sklad  $sklad
      * @return JsonResponse
      */
-    public function edit(Sklad $sklad)
+    public function edit($realm, $id)
     {
+        $sklad = $realm === env('R1') ? Sklad::find($id) : SkladRealm::find($id);
+
         $helper = new SkladHelper();
         return response()->json([
-            'id' => $sklad->id,
-            'item' => $sklad->item,
-            'created' => $sklad->created,
-            'work_date' => $sklad->work_date,
-            'customer' => $helper->customer($sklad->customer_id),
-            'invoice' => $helper->finalInvoice($sklad->final_invoice_id)
+            'id' => $sklad['id'],
+            'item' => $sklad['item'],
+            'created' => $sklad['created'],
+            'work_date' => $sklad['work_date'],
+            'customer' => $helper->customer($sklad['customer_id'], $realm),
+            'invoice' => $helper->finalInvoice($sklad['final_invoice_id'], $realm)
         ], 200);
     }
 
@@ -80,18 +94,15 @@ class SkladController extends Controller
      * @param  \App\Sklad  $sklad
      * @return JsonResponse
      */
-    public function update(Request $request, Sklad $sklad)
+    public function update(Request $request)
     {
-        $skladToUpdate = request(['id', 'customer_id', 'final_invoice_id', 'item', 'created', 'work_date']);
+        $id = $request->route()->parameters['sklad'];
+        $sklad = request(['id', 'customer_id', 'final_invoice_id', 'item', 'created', 'work_date']);
 
-        Sklad::where('id', $skladToUpdate['id'])
-            ->update([
-                'customer_id' => $skladToUpdate['customer_id'],
-                'final_invoice_id' => $skladToUpdate['final_invoice_id'],
-                'item' => $skladToUpdate['item'],
-                'work_date' => $skladToUpdate['work_date'],
-                'created' => $skladToUpdate['created']
-            ]);
+        $helper = new SkladHelper();
+        $table = $request->realm === env('R1') ? 'sklads' : 'sklads_2';
+        $helper->updateSklad($sklad, $id, $table);
+
         return response()->json([
             'success' => trans('sklad.updated'),
         ], 200);
@@ -108,22 +119,13 @@ class SkladController extends Controller
     {
         $from = $request->from;
         $to = $request->to;
-        $all = [];
-
-        $sklads = DB::table('sklads')
-            ->whereBetween('created', [$from, $to])
-            ->orderBy('id', 'ASC')
-            ->get();
-
+        $realm = $request->realm;
         $helper = new SkladHelper();
-        foreach ($sklads as $sklad) {
-            $sklad->invoice_id = $helper->finalInvoice($sklad->final_invoice_id);
-            $sklad->customer = $helper->customer($sklad->customer_id);
-            $all[] = $sklad;
-        }
+
+        $sklads = $helper->filterSklads($from, $to, $realm);
 
         return response()->json([
-            'sklads' => $all,
+            'sklads' => $sklads,
         ]);
     }
 
@@ -133,8 +135,9 @@ class SkladController extends Controller
      * @param  \App\Sklad  $sklad
      * @return JsonResponse
      */
-    public function destroy(Sklad $sklad)
+    public function destroy($realm, $id)
     {
+        $sklad = $realm === env('R1') ? Sklad::find($id) : SkladRealm::find($id);
         $sklad->delete();
         return response()->json([
             'success' => trans('sklad.removed'),

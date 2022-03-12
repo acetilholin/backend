@@ -3,6 +3,7 @@
 
 namespace App\Helpers;
 
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 class CustomerHelper
@@ -26,6 +27,15 @@ class CustomerHelper
         } else {
             return null;
         }
+    }
+
+    public function customerExistsInRealm($customer)
+    {
+        return DB::table('customers_2')
+            ->where('naziv_partnerja', 'like', '%'.$customer['naziv_partnerja'].'%')
+            ->where('kraj_ulica', 'like', '%'.$customer['kraj_ulica'].'%')
+            ->where('posta', 'like', '%'.$customer['posta'].'%')
+            ->get();
     }
 
     protected function messages()

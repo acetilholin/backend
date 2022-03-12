@@ -18,7 +18,7 @@ class CompanyController extends Controller
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function index()
+    public function index(Request $request)
     {
         $company = Company::all();
         return response()->json([
@@ -51,11 +51,14 @@ class CompanyController extends Controller
      * Display the specified resource.
      *
      * @param  \App\Company  $company
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
-    public function show(Company $company)
+    public function show($realm, $id)
     {
-        //
+        $company = Company::find($id);
+        return response()->json([
+            'company' => [$company]
+        ], 200);
     }
 
     /**
@@ -76,15 +79,20 @@ class CompanyController extends Controller
      * @param  \App\Company  $company
      * @return \Illuminate\Http\JsonResponse
      */
-    public function update(Request $request, Company $company)
+    public function update(Request $request)
     {
+        $id = $request->route()->parameters['company'];
         $companyData = request(['company']);
-        $companyData = $companyData['company'];
+        $company = Company::find($id);
 
-        $company->update($companyData[0]);
-        return response()->json([
-            'success' => trans('company.updated'),
-        ], 200);
+        try {
+            $company->update($companyData['company'][0]);
+            return response()->json([
+                'success' => trans('company.updated'),
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json(['error' => trans('company.requiredFields')], 422);
+        }
     }
 
     /**

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use App\Recipient;
+use App\RecipientRealm;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 
@@ -43,9 +44,16 @@ class RecipientController extends Controller
     {
         $recipientData = request(['invoice_id', 'title', 'street', 'posta']);
 
-        Recipient::create($recipientData)->save();
+        if ($request->realm === env('R1')) {
+            Recipient::create($recipientData)->save();
+        } else {
+            RecipientRealm::create($recipientData)->save();
+        }
 
-        $recipient = Recipient::where('invoice_id', $recipientData['invoice_id'])->first();
+        $recipient = $request->realm === env('R1') ?
+            Recipient::where('invoice_id', $recipientData['invoice_id'])->first() :
+            RecipientRealm::where('invoice_id', $recipientData['invoice_id'])->first();
+
         $recipient = $recipient->getAttributes();
 
         return response()->json([
@@ -83,12 +91,19 @@ class RecipientController extends Controller
      * @param  \App\Recipient  $recipient
      * @return \Illuminate\Http\JsonResponse
      */
-    public function update(Request $request, Recipient $recipient)
+    public function update(Request $request)
     {
+        $recipient = $request->id === env('R1') ?
+            Recipient::where('id', $request->id)->first() :
+            RecipientRealm::where('id', $request->id)->first();
+
         $recipientData = request(['id', 'title', 'street', 'posta']);
         $recipient->update($recipientData);
 
-        $recipient = Recipient::find($recipientData['id']);
+        $recipient = $request->id === env('R1') ?
+            Recipient::find($recipientData['id']) :
+            RecipientRealm::find($recipientData['id']);
+
         $recipient = $recipient->getAttributes();
 
         return response()->json([
@@ -103,9 +118,11 @@ class RecipientController extends Controller
      * @param  \App\Recipient  $recipient
      * @return \Illuminate\Http\JsonResponse
      */
-    public function destroy(Recipient $recipient)
+    public function destroy($realm, $id)
     {
+        $recipient = $realm === env('R1') ? Recipient::find($id) : RecipientRealm::find($id);
         $recipient->delete();
+
         return response()->json([
             'success' => trans('recipient.recipientRemoved'),
         ], 200);

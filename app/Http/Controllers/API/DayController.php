@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use App\Day;
+use App\DayRealm;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 
@@ -84,8 +85,10 @@ class DayController extends Controller
      * @param  \App\Day  $day
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Day $day)
+    public function destroy($realm, $id)
     {
+        $day = $realm === env('R1') ? Day::find($id) :
+            DayRealm::find($id);
         $day->delete();
     }
 }

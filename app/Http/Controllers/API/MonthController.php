@@ -3,10 +3,13 @@
 namespace App\Http\Controllers\API;
 
 use App\Day;
+use App\DayRealm;
 use App\Employee;
 use App\Helpers\MonthHelper;
 use App\Http\Resources\MonthResource;
 use App\Month;
+use App\MonthRealm;
+use Google\Service\GameServices\Realm;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 
@@ -22,9 +25,13 @@ class MonthController extends Controller
      *
      * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection
      */
-    public function index()
+    public function index($realm)
     {
-        return MonthResource::collection(Month::all()->sortByDesc('id'));
+        $months = $realm === env('R1') ?
+            Month::all()->sortByDesc('id') :
+            MonthRealm::all()->sortByDesc('id');
+
+        return MonthResource::collection($months);
     }
 
     /**
@@ -47,12 +54,13 @@ class MonthController extends Controller
     {
         $days = request(['days']);
         $report = request(['report']);
+        $realm = $request->realm;
 
         $daysData = $days['days'];
         $reportData = $report['report'];
 
         $helper = new MonthHelper();
-        $helper->insert($daysData, $reportData);
+        $helper->insert($daysData, $reportData, $realm);
 
         return response()->json([
             'success' => trans('month.monthSaved')
@@ -77,26 +85,22 @@ class MonthController extends Controller
      * @param  \App\Month  $month
      * @return \Illuminate\Http\JsonResponse
      */
-    public function edit(Month $month)
+    public function edit($realm, $id)
     {
-        $month = $month->getAttributes();
+        $month = $realm === env('R1') ? Month::find($id) : MonthRealm::find($id);
+
         $eId = $month['employee_id'];
         $mid = $month['id'];
 
         $helper = new MonthHelper();
-        $employeeData = Employee::where('id', $eId)->first();
-        $employee = $employeeData->getAttributes();
-        $person = $employee['person'];
-        $address = $employee['address'];
-        $posta = $employee['posta'];
-
-        $days = $helper->getDays($mid);
+        $employee = Employee::find($eId);
+        $days = $helper->getDays($mid, $realm);
 
         return response()->json([
             'month' => $month,
-            'employee' => $person,
-            'address' => $address,
-            'posta' => $posta,
+            'employee' => $employee['person'],
+            'address' => $employee['address'],
+            'posta' => $employee['posta'],
             'eId' => $eId,
             'days' => $days
         ], 200);
@@ -113,12 +117,14 @@ class MonthController extends Controller
         $from = $request->from;
         $to = $request->to;
         $employee_id = $request->employee_id;
+        $realm = $request->realm;
 
         if (!$from && !$to) {
-            $months = Month::where('employee_id', $employee_id)->get();
+            $months = $realm === env('R1') ? Month::where('employee_id', $employee_id)->get() :
+                MonthRealm::where('employee_id', $employee_id)->get();
         } else {
             $helper = new MonthHelper();
-            $months = $helper->filter($from, $to, $employee_id);
+            $months = $helper->filter($from, $to, $employee_id, $realm);
         }
 
         return MonthResource::collection($months);
@@ -128,22 +134,24 @@ class MonthController extends Controller
      * Update the specified resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Month  $month
      * @return \Illuminate\Http\JsonResponse
      */
-    public function update(Request $request, Month $month)
+    public function update(Request $request)
     {
+        $id = $request->route()->parameters['month'];
         $data = request(['days', 'month', 'employee_id']);
+
         $monthData = $data['month'];
         $daysData = $data['days'];
+
         $monthData['employee_id'] = $data['employee_id'];
         $allDays = [];
+        $month = $request->realm === env('R1') ? Month::find($id) : MonthRealm::find($id);
 
         try {
-
             $month->update($monthData);
             $helper = new MonthHelper();
-            $helper->update($daysData);
+            $helper->update($daysData, $request->realm);
 
             $days = $month->days;
 
@@ -166,17 +174,17 @@ class MonthController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function copy(Request $request)
+    public function copy($realm, $id)
     {
-        $id = $request->id;
-
-        $monthData = Month::where('id', $id)->first();
+        $monthData = $realm === env('R1') ? Month::find($id) : MonthRealm::find($id);
         $month = $monthData->getAttributes();
 
-        $days = Day::where('month_id', $id)->get();
+        $days = $realm === env('R1') ?
+            Day::where('month_id', $id)->get() :
+            DayRealm::where('month_id', $id)->get();
 
         $helper = new MonthHelper();
-        $helper->copy($month, $days);
+        $helper->copy($month, $days, $realm);
 
         return response()->json([
             'success' => trans('month.monthCopied'),
@@ -189,8 +197,9 @@ class MonthController extends Controller
      * @param  \App\Month  $month
      * @return \Illuminate\Http\JsonResponse
      */
-    public function destroy(Month $month)
+    public function destroy($realm, $id)
     {
+        $month = $realm === env('R1') ? Month::find($id) : MonthRealm::find($id);
         $month->delete();
         return response()->json([
             'success' => trans('month.monthRemoved'),

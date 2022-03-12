@@ -2,7 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 
-Route::group(['middleware' => ['api'], 'prefix' => 'auth'], function ($router) {
+Route::group(['middleware' => ['api'], 'prefix' => 'auth/{realm}'], function ($router) {
     Route::post('logout', 'Auth\AuthController@logout');
     Route::post('refresh', 'Auth\AuthController@refresh');
     Route::post('login', 'Auth\AuthController@login');
@@ -17,7 +17,6 @@ Route::group(['middleware' => ['api'], 'prefix' => 'auth'], function ($router) {
     Route::get('invoice/{id}/export', 'API\InvoiceController@export');
     Route::get('invoice/{year}', 'API\InvoiceController@perYear');
     Route::post('invoice/checkSifra', 'API\InvoiceController@checkIfSifraExists');
-
 
     Route::resource('finalInvoices', 'API\FinalInvoiceController');
     Route::post('finalInvoice/interval', 'API\FinalInvoiceController@interval');
@@ -36,6 +35,7 @@ Route::group(['middleware' => ['api'], 'prefix' => 'auth'], function ($router) {
     Route::resource('customers', 'API\CustomerController');
     Route::post('customers/fromToInvoice','API\CustomerController@fromToInvoice');
     Route::post('customers/fromToFinal','API\CustomerController@fromToFinal');
+    Route::get('customers/{id}/export','API\CustomerController@exportToRealm');
 
     Route::resource('items', 'API\ItemController');
 
@@ -58,7 +58,6 @@ Route::group(['middleware' => ['api'], 'prefix' => 'auth'], function ($router) {
     Route::post('total', 'API\TotalController@totalPerMonth');
 
     Route::resource('sklads','API\SkladController');
-    Route::get('sklads/{id}/{status}/status', 'API\SkladController@status');
     Route::post('sklads/filter', 'API\SkladController@filter');
 });
 

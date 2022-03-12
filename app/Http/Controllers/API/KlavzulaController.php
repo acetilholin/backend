@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use App\Klavzula;
+use App\KlavzulaRealm;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 
@@ -18,9 +19,9 @@ class KlavzulaController extends Controller
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function index()
+    public function index($realm)
     {
-        $klavzule = Klavzula::all();
+        $klavzule = $realm === env('R1') ? Klavzula::all() : KlavzulaRealm::all();
         return response()->json([
             'klavzule' => $klavzule
         ], 200);
@@ -46,7 +47,13 @@ class KlavzulaController extends Controller
     {
         $klavzulaData = request(['short_name', 'description']);
 
-        Klavzula::create($klavzulaData)->save();
+        if ($request->realm === env('R1')) {
+            Klavzula::create($klavzulaData)->save();
+        } else {
+            KlavzulaRealm::create($klavzulaData)->save();
+        }
+
+
         return response()->json([
             'success' => trans('klavzule.klavzulaCreated')
         ], 200);
@@ -69,10 +76,14 @@ class KlavzulaController extends Controller
      * @param  \App\Klavzula  $klavzula
      * @return \Illuminate\Http\JsonResponse
      */
-    public function edit(Klavzula $klavzula)
+    public function edit($realm, $id)
     {
+        $klavzula = $realm === env('R1') ?
+            Klavzula::find($id) :
+            KlavzulaRealm::find($id);
+
         return response()->json([
-            'klavzula' => $klavzula->getAttributes()
+            'klavzula' => $klavzula
         ]);
     }
 
@@ -83,8 +94,13 @@ class KlavzulaController extends Controller
      * @param  \App\Klavzula  $klavzula
      * @return \Illuminate\Http\JsonResponse
      */
-    public function update(Request $request, Klavzula $klavzula)
+    public function update(Request $request)
     {
+        $id = $request->route()->parameters['klavzula'];
+        $klavzula = $request->realm === env('R1') ?
+            Klavzula::where('id', $id)->first() :
+            KlavzulaRealm::where('id', $id)->first();
+
         $klavzulaData = request(['short_name', 'description']);
         $klavzula->update($klavzulaData);
         return response()->json([
@@ -98,8 +114,12 @@ class KlavzulaController extends Controller
      * @param  \App\Klavzula  $klavzula
      * @return \Illuminate\Http\JsonResponse
      */
-    public function destroy(Klavzula $klavzula)
+    public function destroy($realm, $id)
     {
+        $klavzula = $realm === env('R1') ?
+            Klavzula::where('id', $id)->first() :
+            KlavzulaRealm::where('id', $id)->first();
+
         $klavzula->delete();
         return response()->json([
             'success' => trans('klavzule.klavzulaDeleted')

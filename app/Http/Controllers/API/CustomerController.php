@@ -3,10 +3,13 @@
 namespace App\Http\Controllers\API;
 
 use App\Customer;
+use App\CustomerRealm;
 use App\FinalInvoice;
+use App\FinalInvoiceRealm;
 use App\Helpers\CustomerHelper;
 use App\Http\Resources\CustomersResource;
 use App\Invoice;
+use App\InvoiceRealm;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 
@@ -22,9 +25,14 @@ class CustomerController extends Controller
      *
      * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection
      */
-    public function index()
+    public function index(Request $request)
     {
-        return CustomersResource::collection(Customer::all()->sortByDesc('id'));
+        $realm = $request->realm;
+        $customers = $realm === env('R1') ?
+            Customer::all()->sortByDesc('id') :
+            CustomerRealm::all()->sortByDesc('id');
+
+        return CustomersResource::collection($customers);
     }
 
     /**
@@ -54,25 +62,57 @@ class CustomerController extends Controller
 
         $customerData = request(['naziv_partnerja', 'kraj_ulica', 'posta', 'email', 'telefon', 'id_ddv', 'sklic_st']);
 
-        Customer::create($customerData)->save();
+        if ($request->realm === env('R1')) {
+            Customer::create($customerData)->save();
+        } else {
+            CustomerRealm::create($customerData)->save();
+        }
+
         return response()->json([
             'success' => trans('customer.customerCreated')
         ], 200);
     }
 
     /**
-     * Display the specified resource.
+     * Export customer to another realm.
      *
-     * @param  \App\Customer  $customer
      * @return \Illuminate\Http\JsonResponse
      */
-    public function show(Customer $customer)
+    public function exportToRealm($realm, $id)
     {
+        $customer = Customer::find($id);
+
+        $helper = new CustomerHelper();
+        $customerRealm = $helper->customerExistsInRealm($customer);
+
+        if($customerRealm->isEmpty()) {
+            $dataToInsert = $customer->getAttributes();
+            unset($dataToInsert['id']);
+            CustomerRealm::create($dataToInsert);
+            return response()->json([
+                'success' => trans('customer.exportedToRealm')
+            ], 200);
+        } else {
+            return response()->json(['error' => trans('customer.alreadyExists')], 422);
+        }
+    }
+
+    /**
+     * Display the specified resource.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function show($realm, $id)
+    {
+        $customer = $realm === env('R1') ?
+            Customer::where('id', $id)->first() :
+            CustomerRealm::where('id', $id)->first();
+
         $allInvoices = [];
         $allFinalInvoices = [];
 
-        $invoices = $customer->invoices;
-        $finalInvoices = $customer->finalInvoices;
+        $invoices = $customer->invoices()->where('customer_id', $id)->get();
+        $finalInvoices = $customer->finalInvoices()->where('customer_id', $id)->get();
 
         foreach ($invoices as $invoice) {
             $allInvoices[] = $invoice->getAttributes();
@@ -96,13 +136,15 @@ class CustomerController extends Controller
      */
     public function fromToFinal(Request $request)
     {
-        $from = $request->from;
-        $to = $request->to;
-        $customerId = $request->customer_id;
-
-        $finalInvoices = FinalInvoice::whereBetween('timestamp', [$from, $to])
-            ->where('customer_id', $customerId)
-            ->get();
+        if ($request->realm === env('R1')) {
+            $finalInvoices = FinalInvoice::whereBetween('timestamp', [$request->from, $request->to])
+                ->where('customer_id', $request->customer_id)
+                ->get();
+        } else {
+            $finalInvoices = FinalInvoiceRealm::whereBetween('timestamp', [$request->from, $request->to])
+                ->where('customer_id', $request->customer_id)
+                ->get();
+        }
 
         return response()->json([
             'final' => $finalInvoices
@@ -117,13 +159,15 @@ class CustomerController extends Controller
      */
     public function fromToInvoice(Request $request)
     {
-        $from = $request->from;
-        $to = $request->to;
-        $customerId = $request->customer_id;
-
-        $invoices = Invoice::whereBetween('timestamp', [$from, $to])
-            ->where('customer_id', $customerId)
-            ->get();
+        if ($request->realm === env('R1')) {
+            $invoices = Invoice::whereBetween('timestamp', [$request->from, $request->to])
+                ->where('customer_id', $request->customer_id)
+                ->get();
+        } else {
+            $invoices = InvoiceRealm::whereBetween('timestamp', [$request->from, $request->to])
+                ->where('customer_id', $request->customer_id)
+                ->get();
+        }
 
         return response()->json([
             'invoices' => $invoices
@@ -136,8 +180,12 @@ class CustomerController extends Controller
      * @param  \App\Customer  $customer
      * @return \Illuminate\Http\JsonResponse
      */
-    public function edit(Customer $customer)
+    public function edit($realm, $id)
     {
+        $customer = $realm === env('R1') ?
+            Customer::where('id', $id)->first() :
+            CustomerRealm::where('id', $id)->first();
+
         return response()->json([
             'customer' => $customer->getAttributes()
         ]);
@@ -150,8 +198,13 @@ class CustomerController extends Controller
      * @param  \App\Customer  $customer
      * @return \Illuminate\Http\JsonResponse
      */
-    public function update(Request $request, Customer $customer)
+    public function update(Request $request)
     {
+        $id = $request->route()->parameters['customer'];
+        $customer = $request->realm === env('R1') ?
+            Customer::where('id', $id)->first() :
+            CustomerRealm::where('id', $id)->first();
+
         $customerData = request(['naziv_partnerja', 'kraj_ulica', 'posta', 'email', 'telefon', 'id_ddv', 'sklic_st']);
         $customer->update($customerData);
         return response()->json([
@@ -165,9 +218,11 @@ class CustomerController extends Controller
      * @param  \App\Customer  $customer
      * @return \Illuminate\Http\JsonResponse
      */
-    public function destroy(Customer $customer)
+    public function destroy($realm, $id)
     {
+        $customer = $realm === env('R1') ? Customer::find($id) : CustomerRealm::find($id);
         $customer->delete();
+
         return response()->json([
             'success' => trans('customer.customerDeleted')
         ], 200);

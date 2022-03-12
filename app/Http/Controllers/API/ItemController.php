@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use App\Item;
+use App\ItemRealm;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 
@@ -84,8 +85,10 @@ class ItemController extends Controller
      * @param  \App\Item  $item
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Item $item)
+    public function destroy($realm, $id)
     {
+        $item = $realm === env('R1') ? Item::find($id) :
+            ItemRealm::find($id);
         $item->delete();
     }
 }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Setting;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\DB;
 
 class SettingController extends Controller
 {
@@ -20,15 +21,25 @@ class SettingController extends Controller
      */
     public function index()
     {
-        $klavzuleData = Setting::where('data', 'klavzule')->first();
-        $companyData = Setting::where('data', 'company')->first();
+        $klavzuleData = Setting::where('data', 'klavzule')
+            ->where('user_id', auth()->user()->id)
+            ->first();
+
+        $companyData = Setting::where('data', 'company')
+            ->where('user_id', auth()->user()->id)
+            ->first();
+
+        $realm = Setting::where('data', 'realm')
+            ->where('user_id', auth()->user()->id)
+            ->first();
 
         $klavzule = $klavzuleData->getAttributes();
         $company = $companyData->getAttributes();
 
         return response()->json([
             'klavzule' => $klavzule,
-            'company' => $company
+            'company' => $company,
+            'realm' => $realm
         ], 200);
     }
 
@@ -85,9 +96,14 @@ class SettingController extends Controller
     public function update(Request $request, Setting $settings)
     {
         $data = request(['visible', 'data']);
-
-        Setting::where('data', $data['data'])
-            ->update(['visible' => $data['visible']]);
+        DB::table('settings')
+            ->updateOrInsert(
+                ['user_id' => auth()->user()->id, 'data' => $data['data']],
+                [ 'visible' => $data['visible'],
+                    'data' => $data['data'],
+                    'user_id' => auth()->user()->id
+                ]
+            );
 
         return response()->json([
             'success' => trans('settings.settingChanged')

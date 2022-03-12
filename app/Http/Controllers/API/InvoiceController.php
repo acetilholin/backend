@@ -3,14 +3,19 @@
 namespace App\Http\Controllers\API;
 
 use App\Customer;
+use App\CustomerRealm;
 use App\FinalInvoice;
+use App\FinalInvoiceRealm;
 use App\Helpers\FinalInvoiceHelper;
 use App\Helpers\InvoiceHelper;
 use App\Http\Resources\InvoiceResource;
 use App\Http\Resources\InvoicesResource;
 use App\Invoice;
+use App\InvoiceRealm;
 use App\Klavzula;
+use App\KlavzulaRealm;
 use App\Recipient;
+use App\RecipientRealm;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\DB;
@@ -23,9 +28,13 @@ class InvoiceController extends Controller
         $this->middleware(['auth:api']);
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        return InvoicesResource::collection(Invoice::all()->sortByDesc('id'));
+        if ($request->route()->parameters['realm'] === env('R1')) {
+            return InvoicesResource::collection(Invoice::all()->sortByDesc('id'));
+        } else {
+            return InvoicesResource::collection(InvoiceRealm::all()->sortByDesc('id'));
+        }
     }
 
     /**
@@ -46,6 +55,7 @@ class InvoiceController extends Controller
      */
     public function store(Request $request)
     {
+        $realm = $request->route()->parameters['realm'];
         $invoice = request(['invoice']);
         $items = request(['items']);
         $recipient = request(['recipient']);
@@ -55,12 +65,12 @@ class InvoiceController extends Controller
         $recipientData = $recipient['recipient'];
 
         $helper = new InvoiceHelper();
-        $sifra_predracuna = $helper->sifraPredracuna();
+        $sifra_predracuna = $helper->sifraPredracuna($realm);
         $invoiceData['sifra_predracuna'] = $sifra_predracuna;
         $invoiceData['iid'] = Str::random(5);
         $invoiceData['timestamp'] = date("Y-m-d");
 
-        $helper->insertAllData($invoiceData, $recipientData, $items);
+        $helper->insertAllData($invoiceData, $recipientData, $items, $realm);
 
         return response()->json([
             'success' => trans('invoice.invoiceSaved')
@@ -76,12 +86,15 @@ class InvoiceController extends Controller
     public function copy(Request $request)
     {
         $id = $request->id;
-        $invoice = Invoice::where('id', $id)->first();
+        $realm = $request->realm;
+
+        $invoice = $realm === env('R1') ? Invoice::where('id', $id)->first() : InvoiceRealm::where('id', $id)->first();
+
         $items = $invoice->items;
         $invoiceData = $invoice->getAttributes();
 
         $helper = new InvoiceHelper();
-        $helper->copyInvoice($invoiceData, $items);
+        $helper->copyInvoice($invoiceData, $items, $realm);
 
         return response()->json([
             'success' => trans('invoice.invoiceCopied'),
@@ -91,12 +104,14 @@ class InvoiceController extends Controller
     public function export(Request $request)
     {
         $id = $request->id;
-        $invoice = Invoice::where('id', $id)->first();
+        $realm = $request->realm;
+
+        $invoice = $realm === env('R1') ? Invoice::where('id', $id)->first() : InvoiceRealm::where('id', $id)->first();
         $invoiceData = $invoice->getAttributes();
 
         $helper = new FinalInvoiceHelper();
         try {
-            $helper->exportToFinalInvoices($invoiceData);
+            $helper->exportToFinalInvoices($invoiceData, $realm);
             return response()->json([
                 'success' => trans('invoice.invoiceExportedToFinal'),
             ]);
@@ -111,24 +126,25 @@ class InvoiceController extends Controller
      * @param  \App\Invoice  $invoice
      * @return \Illuminate\Http\JsonResponse
      */
-    public function show(Invoice $invoice)
+    public function show($realm, $id)
     {
-        $items = $invoice->items()->get();
-        $invoice = collect($invoice);
-        $id = $invoice->get('id');
-        $customerId = $invoice->get('customer_id');
-        $klavzula = $invoice->get('klavzula');
+        $invoice = $realm === env('R1') ? Invoice::where('id', $id)->first() : InvoiceRealm::where('id', $id)->first();
+        $invoice = $invoice->getAttributes();
+        $items = $realm === env('R1') ? Invoice::find($id)->items : InvoiceRealm::find($id)->items;
+        $customerData = $realm === env('R1') ?
+            Customer::where('id', $invoice['customer_id'])->first() :
+            CustomerRealm::where('id', $invoice['customer_id'])->first();
 
-        $invoice = $invoice->all();
+        $recipientData = $realm === env('R1') ?
+            Recipient::where('invoice_id', $id)->first() :
+            RecipientRealm::where('invoice_id', $id)->first();
 
-        $customerData = Customer::where('id', $customerId)->first();
+        $klavzulaData = $realm === env('R1') ?
+            Klavzula::where('short_name', $invoice['klavzula'])->first() :
+            KlavzulaRealm::where('short_name', $invoice['klavzula'])->first();
+
         $customer = $customerData->getAttributes();
-
-        $klavzulaData = Klavzula::where('short_name', $klavzula)->first();
         $klavzula = isset($klavzulaData) ? $klavzulaData->getAttributes() : null;
-
-        $recipientData = Recipient::where('invoice_id', $id)->first();
-
         $recipient = $recipientData !== null ? $recipientData->getAttributes() : null;
 
         $allItems = [];
@@ -152,10 +168,11 @@ class InvoiceController extends Controller
      * @param  InvoicesResource  $invoiceitems
      * @return \Illuminate\Http\JsonResponse
      */
-    public function perYear($year)
+    public function perYear($realm, $year)
     {
+        $table = $realm === env('R1') ? 'invoices' : 'invoices_2';
         $helper = new InvoiceHelper();
-        $invoices = $helper->invoicePerYear($year);
+        $invoices = $helper->invoicePerYear($year, $table);
         $allInvoices = [];
 
         foreach ($invoices as $invoice) {
@@ -175,10 +192,14 @@ class InvoiceController extends Controller
      */
     public function interval(Request $request)
     {
+        $realm = $request->realm;
         $from = $request->from;
         $to = $request->to;
+        $allInvoices = [];
 
-        $invoices = DB::table('invoices')
+        $table = $realm === env('R1') ? 'invoices' : 'invoices_2';
+
+        $invoices = DB::table($table)
             ->whereBetween('timestamp', [$from, $to])
             ->orderBy('id', 'ASC')
             ->get();
@@ -198,16 +219,23 @@ class InvoiceController extends Controller
      * @param  \App\Invoice  $invoice
      * @return \Illuminate\Http\JsonResponse
      */
-    public function edit(Invoice $invoice)
+    public function edit($realm, $id)
     {
         $allItems = [];
-        $items = $invoice->items;
-        $recipient = $invoice->recipient;
+        $invoice = $realm === env('R1') ?
+            Invoice::where('id', $id)->first() : InvoiceRealm::where('id', $id)->first();
+        $items = $realm === env('R1') ?
+            Invoice::find($id)->items : InvoiceRealm::find($id)->items;
 
-        $recipient = $recipient !== null ? $recipient->getAttributes() : null;
+        $recipient = $realm === env('R1') ?
+            Invoice::find($id)->recipient : InvoiceRealm::find($id)->recipient;
+
+        $invoice = $invoice->getAttributes();
+
+        $recipient = $recipient ? $recipient->getAttributes() : null;
 
         foreach ($items as $item) {
-            $allItems[] = $item;
+            $allItems[] = $item->getAttributes();
         }
 
         return response()->json([
@@ -221,17 +249,19 @@ class InvoiceController extends Controller
      * Update the specified resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Invoice  $invoice
      * @return \Illuminate\Http\JsonResponse
      */
-    public function update(Request $request, Invoice $invoice)
+    public function update($realm, $id)
     {
         $invoiceData = request(['invoice']);
         $itemsData = request(['items']);
+        $table = $realm === env('R1') ? 'items' : 'items_2';
 
-        $id = $invoiceData['invoice']['id'];
+        $finalInvoice = $realm === env('R1') ? FinalInvoice::where('id', $id)->first() :
+            FinalInvoiceRealm::where('id', $id)->first();
 
-        $finalInvoice = FinalInvoice::where('id', $id)->first();
+        $invoice = $realm === env('R1') ?
+            Invoice::where('id', $id)->first() : InvoiceRealm::where('id', $id)->first();
 
         $invoice->update($invoiceData['invoice']);
 
@@ -242,7 +272,7 @@ class InvoiceController extends Controller
 
         $items = $itemsData['items'];
         $helper = new InvoiceHelper();
-        $helper->insertData($items);
+        $helper->insertData($table, $items);
         $allItems = [];
 
         $items = $invoice->items;
@@ -263,9 +293,11 @@ class InvoiceController extends Controller
      * @param  \App\Invoice  $invoice
      * @return \Illuminate\Http\JsonResponse
      */
-    public function destroy(Invoice $invoice)
+    public function destroy($realm, $id)
     {
+        $invoice = $realm === env('R1') ? Invoice::find($id): InvoiceRealm::find($id);
         $invoice->delete();
+
         return response()->json([
             'success' => trans('invoice.invoiceRemoved'),
         ], 200);
@@ -280,7 +312,10 @@ class InvoiceController extends Controller
      */
     public function checkIfSifraExists(Request $request)
     {
-        $invoice = Invoice::where('sifra_predracuna', $request->sifra)->first();
+        $realm = $request->realm;
+        $invoice = $realm === env('R1') ?
+            Invoice::where('sifra_predracuna', $request->sifra)->first() :
+            InvoiceRealm::where('sifra_predracuna', $request->sifra)->first();
         return response()->json([
             'data' => $invoice !== null,
         ], 200);

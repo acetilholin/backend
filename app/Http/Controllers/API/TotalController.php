@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\FinalInvoiceRealm;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\FinalInvoice;
@@ -36,7 +37,9 @@ class TotalController extends Controller
                 $fromDate = date("Y-m-d", strtotime('01-'.$month.'-'.$year));
                 $toDate = date("Y-m-d", strtotime($days.'-'.$month.'-'.$year));
 
-                $finalInvoices = FinalInvoice::whereBetween('timestamp', [$fromDate, $toDate])->get();
+                $finalInvoices = $request->realm === env('R1') ?
+                    FinalInvoice::whereBetween('timestamp', [$fromDate, $toDate])->get() :
+                    FinalInvoiceRealm::whereBetween('timestamp', [$fromDate, $toDate])->get();
 
                 if (empty($finalInvoices)) {
                     $priceByMonth[] = 0;
