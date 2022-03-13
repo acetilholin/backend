@@ -27,6 +27,7 @@ class CreateInvoicesTable extends Migration
             $table->float('total');
             $table->float('quantity');
             $table->float('vat');
+            $table->text('remark')->default(null);
             $table->timestamps();
         });
     }
