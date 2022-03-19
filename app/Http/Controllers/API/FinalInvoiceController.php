@@ -198,7 +198,9 @@ class FinalInvoiceController extends Controller
 
         foreach ($finalInvoices as $invoice) {
             $noVAT = 0;
-            $items = Item::where('invoice_id', $invoice->id)->get();
+            $items = $realm === env('R1') ?
+                Item::where('invoice_id', $invoice->id)->get():
+                ItemRealm::where('invoice_id', $invoice->id)->get();
 
             foreach ($items as $item) {
                 $item = $item->getAttributes();
