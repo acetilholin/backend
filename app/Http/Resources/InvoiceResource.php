@@ -26,7 +26,10 @@ class InvoiceResource extends JsonResource
             'quantity' => $invoice['quantity'],
             'work_date' => $invoice['work_date'],
             'klavzula' => $invoice['klavzula'],
-            'remark' => $invoice['remark']
+            'remark' => $invoice['remark'],
+            'avans' => $invoice['avans'],
+            'avans_sum' => $invoice['avans_sum'],
+            'avans_after_invoice' => $invoice['avans_after_invoice']
         ];
     }
 }

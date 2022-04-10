@@ -16,7 +16,7 @@ class CreateKlavzulasTable extends Migration
         Schema::create('klavzulas', function (Blueprint $table) {
             $table->id();
             $table->text('short_name');
-            $table->longText('description');
+            $table->longText('description')->default(null);
             $table->timestamps();
         });
     }

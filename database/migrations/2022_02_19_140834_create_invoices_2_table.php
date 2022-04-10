@@ -28,6 +28,8 @@ class CreateInvoices2Table extends Migration
             $table->float('quantity');
             $table->float('vat');
             $table->text('remark')->default(null);
+            $table->boolean('avans')->default(null);
+            $table->float('avans_sum')->default(null);
             $table->timestamps();
         });
     }

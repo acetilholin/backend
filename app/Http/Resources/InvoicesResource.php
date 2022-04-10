@@ -23,7 +23,9 @@ class InvoicesResource extends JsonResource
             'expiration' => $this->expiration,
             'invoice_id' => $this->invoice_id,
             'work_date' => $this->work_date,
-            'customer_id' => $this->customer_id
+            'customer_id' => $this->customer_id,
+            'avans' => $this->avans,
+            'avans_after_invoice' => $this->avans_after_invoice
         ];
     }
 }
