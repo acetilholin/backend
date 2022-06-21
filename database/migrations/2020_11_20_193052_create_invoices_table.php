@@ -30,6 +30,7 @@ class CreateInvoicesTable extends Migration
             $table->text('remark')->default(null);
             $table->boolean('avans')->default(null);
             $table->boolean('avans_after_invoice')->default(null);
+            $table->string('related_to_invoice')->default(null);
             $table->float('avans_sum')->default(null);
             $table->timestamps();
         });

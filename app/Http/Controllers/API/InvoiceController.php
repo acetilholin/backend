@@ -19,6 +19,7 @@ use App\RecipientRealm;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class InvoiceController extends Controller
@@ -63,10 +64,13 @@ class InvoiceController extends Controller
         $invoiceData = $invoice['invoice'];
         $items = $items['items'];
         $recipientData = $recipient['recipient'];
-
         $helper = new InvoiceHelper();
-        $sifra_predracuna = $helper->sifraPredracuna($realm);
-        $invoiceData['sifra_predracuna'] = $sifra_predracuna;
+
+        if (!$invoiceData['sifra_predracuna']) {
+            $sifra_predracuna = $helper->sifraPredracuna($realm);
+            $invoiceData['sifra_predracuna'] = $sifra_predracuna;
+        }
+
         $invoiceData['iid'] = Str::random(5);
         $invoiceData['timestamp'] = date("Y-m-d");
 
