@@ -18,6 +18,7 @@ class CreateEmployeesTable extends Migration
             $table->char('person');
             $table->text('address');
             $table->text('posta');
+            $table->boolean('deleted')->default(null);
             $table->timestamps();
         });
     }

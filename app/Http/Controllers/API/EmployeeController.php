@@ -20,7 +20,7 @@ class EmployeeController extends Controller
      */
     public function index()
     {
-        $employees = Employee::all();
+        $employees = Employee::where('deleted', 0)->get();
         return response()->json([
             'employees' => $employees
         ], 200);
@@ -104,8 +104,8 @@ class EmployeeController extends Controller
      */
     public function destroy($realm, $id)
     {
-        $employee = Employee::find($id);
-        $employee->delete();
+        Employee::where('id', $id)
+            ->update(['deleted' => 1]);
         return response()->json([
             'success' => trans('employee.employeeRemoved'),
         ], 200);
