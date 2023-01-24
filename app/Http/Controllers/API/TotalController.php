@@ -46,8 +46,8 @@ class TotalController extends Controller
                 } else {
                     foreach ($finalInvoices as $final) {
                         $final = $final->getAttributes();
-                        $total += $final['total'];
-                        $grandTotal += $final['total'];
+                        $total += (boolean)$final['avans'] ? $final['avans_sum'] : $final['total'];
+                        $grandTotal += (boolean)$final['avans'] ? $final['avans_sum'] : $final['total'];
                     }
                     $priceByMonth[] = $total;
                     $total = 0;

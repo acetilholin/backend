@@ -302,6 +302,13 @@ class InvoiceController extends Controller
         $invoice = $realm === env('R1') ? Invoice::find($id): InvoiceRealm::find($id);
         $invoice->delete();
 
+        $finalInvoice = $realm === env('R1') ? FinalInvoice::where('iid',$invoice->iid )->first() :
+            FinalInvoiceRealm::where('iid',$invoice->iid )->first();
+
+        if ($finalInvoice) {
+            $finalInvoice->delete();
+        }
+
         return response()->json([
             'success' => trans('invoice.invoiceRemoved'),
         ], 200);
