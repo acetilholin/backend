@@ -18,6 +18,10 @@ class CreateDaysTable extends Migration
             $table->integer('month_id');
             $table->date('date');
             $table->text('day_type');
+            $table->text('day_start');
+            $table->text('day_end');
+            $table->text('break_start');
+            $table->text('break_end');
             $table->timestamps();
         });
     }
