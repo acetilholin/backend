@@ -41,7 +41,7 @@ class InvoiceHelper
 
     public function invoicePerYear($year, $table)
     {
-        return DB::select("SELECT * FROM ".$table." WHERE RIGHT(sifra_predracuna,4) = '".$year."' ORDER BY id DESC");
+        return DB::select("SELECT * FROM ".$table." WHERE deleted = 0 AND RIGHT(sifra_predracuna,4) = '".$year."' ORDER BY id DESC");
     }
 
     public function sifraPredracuna($realm)

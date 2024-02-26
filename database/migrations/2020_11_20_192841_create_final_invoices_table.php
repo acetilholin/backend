@@ -27,6 +27,7 @@ class CreateFinalInvoicesTable extends Migration
             $table->float('total');
             $table->float('quantity');
             $table->float('vat');
+            $table->float('total_discount');
             $table->text('remark')->default(null);
             $table->boolean('avans')->default(null);
             $table->boolean('avans_after_invoice')->default(null);

@@ -25,7 +25,9 @@ class InvoicesResource extends JsonResource
             'work_date' => $this->work_date,
             'customer_id' => $this->customer_id,
             'avans' => $this->avans,
+            'deleted' => $this->deleted,
             'avans_after_invoice' => $this->avans_after_invoice,
+            'final_discount' => $this->final_discount,
             'related_to_invoice' => $this->related_to_invoice
         ];
     }
