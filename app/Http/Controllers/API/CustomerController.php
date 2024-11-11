@@ -29,8 +29,8 @@ class CustomerController extends Controller
     {
         $realm = $request->realm;
         $customers = $realm === env('R1') ?
-            Customer::all()->sortByDesc('id') :
-            CustomerRealm::all()->sortByDesc('id');
+            Customer::where('deleted', 0)->orderBy('id', 'desc')->get() :
+            CustomerRealm::where('deleted', 0)->orderBy('id', 'desc')->get();
 
         return CustomersResource::collection($customers);
     }
@@ -85,7 +85,7 @@ class CustomerController extends Controller
         $helper = new CustomerHelper();
         $customerRealm = $helper->customerExistsInRealm($customer);
 
-        if($customerRealm->isEmpty()) {
+        if ($customerRealm->isEmpty()) {
             $dataToInsert = $customer->getAttributes();
             unset($dataToInsert['id']);
             CustomerRealm::create($dataToInsert);
@@ -111,8 +111,14 @@ class CustomerController extends Controller
         $allInvoices = [];
         $allFinalInvoices = [];
 
-        $invoices = $customer->invoices()->where('customer_id', $id)->get();
-        $finalInvoices = $customer->finalInvoices()->where('customer_id', $id)->get();
+        $invoices = $customer->invoices()
+            ->where('customer_id', $id)
+            ->where('deleted', 0)
+            ->get();
+        $finalInvoices = $customer->finalInvoices()
+            ->where('customer_id', $id)
+            ->where('deleted', 0)
+            ->get();
 
         foreach ($invoices as $invoice) {
             $allInvoices[] = $invoice->getAttributes();
@@ -221,7 +227,28 @@ class CustomerController extends Controller
     public function destroy($realm, $id)
     {
         $customer = $realm === env('R1') ? Customer::find($id) : CustomerRealm::find($id);
-        $customer->delete();
+        $customer->update(['deleted' => 1]);
+
+        $invoices = $customer->invoices()
+            ->where('customer_id', $id)
+            ->where('deleted', 0)
+            ->get();
+
+        foreach ($invoices as $invoice) {
+            $invoice = $realm === env('R1') ? Invoice::find($invoice->id) : InvoiceRealm::find($invoice->id);
+            $invoice->deleted = 1;
+            $invoice->save();
+        }
+
+        $finalInvoices = $customer->finalInvoices()
+            ->where('customer_id', $id)
+            ->where('deleted', 0)
+            ->get();
+
+        foreach ($finalInvoices as $finalInvoice) {
+            $finalInvoice = $realm === env('R1') ? FinalInvoice::find($finalInvoice->id) : FinalInvoiceRealm::find($finalInvoice->id);
+            $finalInvoice->delete();
+        }
 
         return response()->json([
             'success' => trans('customer.customerDeleted')

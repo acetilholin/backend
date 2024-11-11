@@ -63,4 +63,3 @@ Route::group(['middleware' => ['api'], 'prefix' => 'auth/{realm}'], function ($r
 
 
 
-

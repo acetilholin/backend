@@ -32,9 +32,9 @@ class InvoiceController extends Controller
     public function index(Request $request)
     {
         if ($request->route()->parameters['realm'] === env('R1')) {
-            return InvoicesResource::collection(Invoice::all()->sortByDesc('id'));
+            return InvoicesResource::collection(Invoice::where('deleted', '0')->orderByDesc('id')->get());
         } else {
-            return InvoicesResource::collection(InvoiceRealm::all()->sortByDesc('id'));
+            return InvoicesResource::collection(InvoiceRealm::where('deleted', '0')->orderByDesc('id')->get());
         }
     }
 
@@ -299,11 +299,11 @@ class InvoiceController extends Controller
      */
     public function destroy($realm, $id)
     {
-        $invoice = $realm === env('R1') ? Invoice::find($id): InvoiceRealm::find($id);
-        $invoice->delete();
+        $invoice = $realm === env('R1') ? Invoice::find($id) : InvoiceRealm::find($id);
+        $invoice->update(['deleted' => 1]);
 
-        $finalInvoice = $realm === env('R1') ? FinalInvoice::where('iid',$invoice->iid )->first() :
-            FinalInvoiceRealm::where('iid',$invoice->iid )->first();
+        $finalInvoice = $realm === env('R1') ? FinalInvoice::where('iid', $invoice->iid)->first() :
+            FinalInvoiceRealm::where('iid', $invoice->iid)->first();
 
         if ($finalInvoice) {
             $finalInvoice->delete();

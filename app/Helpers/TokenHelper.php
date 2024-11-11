@@ -44,6 +44,6 @@ class TokenHelper
         $datetime2 = strtotime($timeNow);
         $minutes = ($datetime2 - $datetime1) / 60;
 
-        return $minutes < 60 ? false : true;
+        return $minutes !== 60;
     }
 }

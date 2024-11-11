@@ -207,6 +207,8 @@ class FinalInvoiceController extends Controller
                 $noVAT += $item['total_price'];
             }
 
+            $invoice->total = (boolean)$invoice->avans ? 0 : $invoice->total;
+
             $customerId = $invoice->customer_id;
 
             $customerData = $realm === env('R1') ?
