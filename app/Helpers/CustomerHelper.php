@@ -5,15 +5,24 @@ namespace App\Helpers;
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 class CustomerHelper
 {
     public function customerValidator($request)
     {
+        $table = $request->realm === env('R1') ? 'customers' : 'customers_2';
         $rules = array(
             'naziv_partnerja' => 'required|max:120',
             'posta' => 'required',
-            'kraj_ulica' => 'required|unique:customers'
+            'kraj_ulica' => [
+                'required',
+                Rule::unique($table)->where(function ($query) use ($request) {
+                    $query->where('naziv_partnerja', $request->naziv_partnerja)
+                        ->where('posta', $request->posta)
+                        ->where('kraj_ulica', $request->kraj_ulica);
+                })
+            ]
         );
 
         $customerData = request(['naziv_partnerja', 'posta', 'kraj_ulica']);
@@ -22,8 +31,7 @@ class CustomerHelper
 
         if ($validator->fails()) {
             $formatter = new MsgFormatterHelper();
-            $messages = $formatter->format($validator->errors()->all());
-            return $messages;
+            return $formatter->format($validator->errors()->all());
         } else {
             return null;
         }
