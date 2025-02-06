@@ -21,5 +21,8 @@ return [
     'tokenMax' => 'Žeton je daljši od :max znakov',
     'tokenExpired' => 'Žeton je potekel',
     'tokenMissmatch' => 'Žeton je napačen',
-    'passwordChanged' => 'Geslo je spremenjeno, lahko se prijavite.'
+    'passwordChanged' => 'Geslo je spremenjeno, lahko se prijavite.',
+    'wrongIdentifier' => 'Napačen identifier',
+    'missingIdentifier' => 'Manjkajoč identifikator',
+    'insufficientRights' => 'Nimate pravic za ta realm'
 ];

@@ -25,7 +25,8 @@ class UsersResource extends JsonResource
             'picture' => $this->picture,
             'online' => $helper->online($this->id),
             'last_seen' => $this->last_seen,
-            'country' => $this->country
+            'country' => $this->country,
+            'realm' => $this->realm
         ];
     }
 }

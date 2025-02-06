@@ -36,7 +36,8 @@ class AuthController extends Controller
         $credentials = request(['email', 'password']);
         $validator = Validator::make($credentials, $rules, $this->messages());
 
-        $ttl = request(['rememberMe']) ? env('JWT_REMEMBER_TTL') : env('JWT_TTL');
+        //$ttl = request(['rememberMe']) ? env('JWT_REMEMBER_TTL') : env('JWT_TTL');
+        $ttl = env('JWT_TTL');
 
         if ($validator->fails()) {
             $formatter = new MsgFormatterHelper();
@@ -45,6 +46,7 @@ class AuthController extends Controller
         }
 
         $user = User::where('email', $credentials['email'])->first();
+
         if (!$user) {
             return response()->json(['error' => trans('loginRegister.emailNotExists')], 401);
         } else {
@@ -64,7 +66,15 @@ class AuthController extends Controller
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
-        return $this->respondWithToken($token);
+        if (!$user->getAttributes()['identifier']) {
+            $identifier = Str::random(100);
+            User::where('email', $credentials['email'])
+                ->update(['identifier' => $identifier]);
+        } else {
+            $identifier = $user->getAttributes()['identifier'];
+        }
+
+        return $this->respondWithToken($token, $identifier);
     }
 
     /**
@@ -189,7 +199,8 @@ class AuthController extends Controller
             'email' => $user->email,
             'username' => $user->username,
             'picture' => $user->picture,
-            'role' => $user->role
+            'role' => $user->role,
+            'realm' => $user->realm
         ]);
     }
 
@@ -222,11 +233,12 @@ class AuthController extends Controller
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    protected function respondWithToken($token)
+    protected function respondWithToken($token,$identifier = null)
     {
         return response()->json([
             'access_token' => $token,
             'token_type' => 'bearer',
+            'identifier' => $identifier,
             'expires_in' => auth()->factory()->getTTL() * 60
         ]);
     }
