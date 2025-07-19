@@ -47,8 +47,8 @@ class Token extends Notification
         return (new MailMessage)
             ->from('no-reply@ogrevanjejanjic.si')
             ->subject('Ponastavitev gesla')
-            ->line('Vnesite žeton, po 60 minutah bo neveljaven!')
-            ->line(new HtmlString('<div class="text-center"><b>'.$this->token.'</b></div>'))
+            ->line(new HtmlString('<div class="text-center" style="font-size: 16px">Tvoj žeton je: <b>'.$this->token.'</b></div><br>'))
+            ->line('Žeton je veljaven 60 minut!')
             ->action(Lang::get('Vnesi žeton'), env('TOKEN_URL'));
     }
 
